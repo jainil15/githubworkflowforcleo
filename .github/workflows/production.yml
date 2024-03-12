@@ -12,6 +12,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Docker Build and Push
+        env:
+          USERNAME: "Haubu"
         run: |
           sudo chmod +x ./set_env.sh
           ./set_env.sh
