@@ -24,7 +24,7 @@ env:
 
 jobs:
   staging:
-    if: github.event_name == 'push_request'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Github checkout
