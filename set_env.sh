@@ -1,3 +1,3 @@
 #!/bin/bash
 touch .env
-echo "$(${{ env.USER }})"
+echo "$USERNAME"
