@@ -1,9 +1,9 @@
 name: "Production environment"
 on:
   push:
-    branches: ["master", "**/feature-*"]
-  pull_request:
     branches: ["master"]
+  pull_request:
+    branches: ["master", "feature-1"]
   workflow_dispatch:
 env:
   POSTGRES_USER: ${{ secrets.POSTGRES_USERNAME }}
