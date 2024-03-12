@@ -1,5 +1,7 @@
 name: "Production environment"
 on:
+  push:
+    branches: ["master"]
   workflow_dispatch:
 
 jobs:
