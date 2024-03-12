@@ -27,7 +27,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Github checkout
+      - name: Github checkout Pull Request
         uses: actions/checkout@v4
 
       - name: Docker Build and Push
