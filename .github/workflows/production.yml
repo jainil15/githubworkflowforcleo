@@ -2,10 +2,13 @@ name: "Production environment"
 on:
   push:
     branches: ["master"]
+  pull_request:
+    branches: ["master"]
   workflow_dispatch:
 
 jobs:
   build_and_deploy:
+    if: github.event_name == 'push_request'
     runs-on: ubuntu-latest
     steps:
       - name: Github checkout
@@ -13,9 +16,28 @@ jobs:
 
       - name: Docker Build and Push
         env:
-          USERNAME: "Haubu"
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
           sudo chmod +x ./set_env.sh
           ./set_env.sh
           docker compose build
           docker compose push
+
+      - name: scp to AWS/AZURE ec2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_KEY }}
+          source: "docker-compose.yaml"
+          target: "/home/ubuntu/docker-compose.yaml"
+
+      - name: ssh to AWS/AZURE ec2 instance
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_KEY }}
+          script: |
+            docker compose -f /home/ubuntu/docker-compose.yaml pull
+            docker-compose -f /home/ubuntu/docker-compose.yaml up -d
