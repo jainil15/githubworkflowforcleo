@@ -1,127 +1,21 @@
-name: "Production environment"
-on:
-  push:
-    branches: ["master"]
-  pull_request:
-    branches: ["master", "feature-1"]
-  workflow_dispatch:
-env:
-  POSTGRES_USER: ${{ secrets.POSTGRES_USERNAME }}
-  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-  POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
-  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
-  HOME: ${{ secrets.HOME }}
-  NEXT_PORT: ${{ secrets.NEXT_PORT }}
-  SERVER_PORT: ${{ secrets.SERVER_PORT }}
-  AUTH0_SECRET: ${{ secrets.AUTH0_SECRET }}
-  AUTH0_BASE_URL: ${{ secrets.AUTH0_BASE_URL }}
-  AUTH0_ISSUER_BASE_URL: ${{ secrets.AUTH0_ISSUER_BASE_URL }}
-  AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
-  AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
-  LOCAL_DATABASE_URL: ${{ secrets.LOCAL_DATABASE_URL }}
-  REMOTE_DATABASE_URL: ${{ secrets.REMOTE_DATABASE_URL }}
+name: My build action requiring more space
+on: push
 
 jobs:
-  staging:
-    if: github.event_name == 'pull_request'
+  build:
+    name: Build my artifact
     runs-on: ubuntu-latest
     steps:
-      - name: Github checkout
-        uses: actions/checkout@v4
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Docker Build and Push
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      - name: Build
         run: |
-          sudo chmod +x ./set_env.sh
-          ./set_env.sh
-          docker compose build
-          docker compose push
-
-      - name: scp to AWS/AZURE ec2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.AWS_STAGING_HOST }}
-          username: ${{ secrets.AWS_STAGING_USERNAME }}
-          key: ${{ secrets.AWS_STAGING_KEY }}
-          source: "docker-compose.yaml"
-          target: "/home/ubuntu/docker-compose.yaml"
-
-      - name: ssh to AWS/AZURE ec2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.AWS_STAGING_HOST }}
-          username: ${{ secrets.AWS_STAGING_USERNAME }}
-          key: ${{ secrets.AWS_STAGING_KEY }}
-          script: |
-            docker compose -f /home/ubuntu/docker-compose.yaml pull
-            docker-compose -f /home/ubuntu/docker-compose.yaml up -d
-  development:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Github checkout
-        uses: actions/checkout@v4
-
-      - name: Docker Build and Push
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: |
-          sudo chmod +x ./set_env.sh
-          ./set_env.sh
-          docker compose build
-          docker compose push
-
-      - name: scp to AWS/AZURE ec2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.AWS_DEV_HOST }}
-          username: ${{ secrets.AWS_DEV_USERNAME }}
-          key: ${{ secrets.AWS_DEV_KEY }}
-          source: "docker-compose.yaml"
-          target: "/home/ubuntu/docker-compose.yaml"
-
-      - name: ssh to AWS/AZURE ec2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.AWS_DEV_HOST }}
-          username: ${{ secrets.AWS_DEV_USERNAME }}
-          key: ${{ secrets.AWS_DEV_KEY }}
-          script: |
-            docker compose -f /home/ubuntu/docker-compose.yaml pull
-            docker-compose -f /home/ubuntu/docker-compose.yaml up -d
-  production:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Github checkout
-        uses: actions/checkout@v4
-
-      - name: Docker Build and Push
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: |
-          sudo chmod +x ./set_env.sh
-          ./set_env.sh
-          docker compose build
-          docker compose push
-
-      - name: scp to AWS/AZURE ec2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.AWS_PROD_HOST }}
-          username: ${{ secrets.AWS_PROD_USERNAME }}
-          key: ${{ secrets.AWS_PROD_KEY }}
-          source: "docker-compose.yaml"
-          target: "/home/ubuntu/docker-compose.yaml"
-
-      - name: ssh to AWS/AZURE ec2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.AWS_PROD_HOST }}
-          username: ${{ secrets.AWS_PROD_USERNAME }}
-          key: ${{ secrets.AWS_PROD_KEY }}
-          script: |
-            docker compose -f /home/ubuntu/docker-compose.yaml pull
-            docker-compose -f /home/ubuntu/docker-compose.yaml up -d
+          echo "Free space:"
+          df -h
